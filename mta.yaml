@@ -1,0 +1,94 @@
+_schema-version: "3.2"
+ID: btp-test04-test04
+description: A Fiori application test04.
+version: 0.0.1
+modules:
+- name: btp-test04-test04-dest-content
+  type: com.sap.application.content
+  requires:
+  - name: btp-test04-test04-dest-srv
+    parameters:
+      content-target: true
+  - name: btp-test04-test04-repo-host
+    parameters:
+      service-key:
+        name: btp-test04-test04-repo-host-key
+  - name: btp-test04-test04-uaa
+    parameters:
+      service-key:
+        name: btp-test04-test04-uaa-key
+  parameters:
+    content:
+      instance:
+        destinations:
+        - Name: btp-test04-test04_repo_host
+          ServiceInstanceName: btp-test04-test04-html5-srv
+          ServiceKeyName: btp-test04-test04-repo-host-key
+          sap.cloud.service: btp-test04-test04
+        - Authentication: OAuth2UserTokenExchange
+          Name: btp-test04-test04_uaa
+          ServiceInstanceName: btp-test04-test04-xsuaa-srv
+          ServiceKeyName: btp-test04-test04-uaa-key
+          sap.cloud.service: btp-test04-test04
+        existing_destinations_policy: ignore
+  build-parameters:
+    no-source: true
+- name: btp-test04-test04-app-content
+  type: com.sap.application.content
+  path: .
+  requires:
+  - name: btp-test04-test04-repo-host
+    parameters:
+      content-target: true
+  build-parameters:
+    build-result: resources
+    requires:
+    - artifacts:
+      - btptest04test04.zip
+      name: btptest04test04
+      target-path: resources/
+- name: btptest04test04
+  type: html5
+  path: .
+  build-parameters:
+    build-result: dist
+    builder: custom
+    commands:
+    - npm install
+    - npm run build:cf
+    supported-platforms: []
+resources:
+- name: btp-test04-test04-dest-srv
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      HTML5Runtime_enabled: true
+      init_data:
+        instance:
+          destinations:
+          - Authentication: NoAuthentication
+            Name: ui5
+            ProxyType: Internet
+            Type: HTTP
+            URL: https://ui5.sap.com
+          existing_destinations_policy: update
+      version: 1.0.0
+    service: destination
+    service-name: btp-test04-test04-dest-srv
+    service-plan: lite
+- name: btp-test04-test04-uaa
+  type: org.cloudfoundry.managed-service
+  parameters:
+    path: ./xs-security.json
+    service: xsuaa
+    service-name: btp-test04-test04-xsuaa-srv
+    service-plan: application
+- name: btp-test04-test04-repo-host
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-name: btp-test04-test04-html5-srv
+    service-plan: app-host
+parameters:
+  deploy_mode: html5-repo
+  enable-parallel-deployments: true
